@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đặt Lịch Khám - MediFlow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8f9ff; }
+        .slot-btn.selected { background-color: #004ac6; color: white; border-color: #004ac6; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- Navbar -->
+    <nav class="bg-white shadow-sm border-b border-[#e5eeff]">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center h-16">
+                <button onclick="window.history.back()" class="text-gray-500 hover:text-gray-900 mr-4 transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                </button>
+                <span class="text-xl font-bold text-[#004ac6]">Chọn Giờ & Đặt Lịch (Bước 3/3)</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-1 max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        
+        <div class="bg-white border border-[#e5eeff] rounded-xl p-6 mb-8 shadow-sm">
+            <h3 class="text-lg font-bold text-gray-900 mb-4 border-b pb-2">Thông tin đăng ký</h3>
+            <div class="grid grid-cols-2 gap-4 text-sm">
+                <div><span class="text-gray-500 block">Phòng khám:</span> <span id="clinicName" class="font-bold text-gray-900"></span></div>
+                <div><span class="text-gray-500 block">Bác sĩ:</span> <span id="doctorName" class="font-bold text-[#004ac6]"></span></div>
+            </div>
+        </div>
+
+        <form id="bookingForm" class="bg-white border border-[#e5eeff] rounded-xl p-6 shadow-sm space-y-6">
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-2">1. Chọn ngày khám</label>
+                <input type="date" id="appointmentDate" required 
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#004ac6] outline-none">
+            </div>
+
+            <div id="slotsSection" class="hidden">
+                <label class="block text-sm font-bold text-gray-700 mb-2">2. Chọn giờ khám</label>
+                <div id="slotsContainer" class="grid grid-cols-3 md:grid-cols-4 gap-3">
+                    <!-- Slots load ở đây -->
+                </div>
+            </div>
+
+            <div id="reasonSection" class="hidden space-y-4">
+                <label class="block text-sm font-bold text-gray-700 mb-2">3. Triệu chứng / Lý do khám</label>
+                <textarea id="reason" rows="3" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#004ac6] outline-none" placeholder="Ví dụ: Đau đầu, sốt nhẹ..."></textarea>
+                
+                <button type="submit" id="btnSubmit" class="w-full bg-[#004ac6] text-white py-3.5 rounded-lg font-bold text-lg hover:bg-blue-800 transition shadow-md mt-4">
+                    Xác nhận Đặt Lịch
+                </button>
+            </div>
+        </form>
+    </main>
+
+    <!-- Modal Trùng lịch -->
+    <div id="conflictModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl transform transition-all">
+            <div class="flex items-center justify-center w-12 h-12 rounded-full bg-red-100 mx-auto mb-4">
+                <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            </div>
+            <h3 class="text-xl font-bold text-center text-gray-900 mb-2">Giờ khám đã bị trùng!</h3>
+            <p class="text-center text-gray-500 mb-6 text-sm">Rất tiếc, khung giờ bạn chọn bác sĩ đã có lịch hẹn. Dưới đây là các khung giờ trống gần nhất, bạn có muốn đổi sang không?</p>
+            
+            <div id="suggestedSlotsContainer" class="space-y-3 mb-6">
+                <!-- Suggestions -->
+            </div>
+
+            <button onclick="closeModal()" class="w-full bg-gray-100 text-gray-700 py-2.5 rounded-lg font-semibold hover:bg-gray-200 transition">
+                Hủy, tôi sẽ tự chọn ngày khác
+            </button>
+        </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script>
+        let selectedStartTime = null;
+        let selectedEndTime = null;
+        let clinicId, doctorId;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = getAccessToken();
+            if (!token) { window.location.href = '/login.html'; return; }
+
+            clinicId = sessionStorage.getItem('booking_clinicId');
+            const clinicName = sessionStorage.getItem('booking_clinicName');
+            doctorId = sessionStorage.getItem('booking_doctorId');
+            const doctorName = sessionStorage.getItem('booking_doctorName');
+
+            if (!clinicId || !doctorId) {
+                alert('Vui lòng chọn bác sĩ trước!');
+                window.location.href = '/book-clinic.html';
+                return;
+            }
+
+            document.getElementById('clinicName').textContent = clinicName;
+            document.getElementById('doctorName').textContent = 'BS. ' + doctorName;
+
+            // Date picker logic
+            const dateInput = document.getElementById('appointmentDate');
+            // Set min date is today
+            const today = new Date().toISOString().split('T')[0];
+            dateInput.setAttribute('min', today);
+
+            dateInput.addEventListener('change', async (e) => {
+                const date = e.target.value;
+                if (!date) return;
+                
+                document.getElementById('slotsSection').classList.remove('hidden');
+                document.getElementById('reasonSection').classList.add('hidden');
+                selectedStartTime = null;
+
+                const container = document.getElementById('slotsContainer');
+                container.innerHTML = '<div class="col-span-full text-center text-sm text-gray-500">Đang tải khung giờ...</div>';
+
+                try {
+                    const res = await fetchAPI(`/doctors/${doctorId}/slots?date=${date}`);
+                    const slots = res.data;
+
+                    if (!slots || slots.length === 0) {
+                        container.innerHTML = '<div class="col-span-full text-center text-sm text-red-500 font-medium p-4 bg-red-50 rounded">Ngày này bác sĩ đã kín lịch hoặc không có ca làm việc.</div>';
+                        return;
+                    }
+
+                    container.innerHTML = slots.map(slot => {
+                        // Nếu status = available mới cho chọn
+                        const isAvailable = slot.status === 'available';
+                        const btnClass = isAvailable 
+                            ? 'slot-btn bg-white border border-gray-300 text-gray-700 hover:border-[#004ac6] hover:text-[#004ac6]' 
+                            : 'bg-gray-100 border border-gray-200 text-gray-400 cursor-not-allowed';
+
+                        return `
+                            <button type="button" ${isAvailable ? `onclick="selectSlot(this, '${slot.start}', '${slot.end}')"` : 'disabled'}
+                                class="${btnClass} py-2 rounded-lg font-medium text-sm transition text-center">
+                                ${slot.start}
+                            </button>
+                        `;
+                    }).join('');
+                } catch (err) {
+                    container.innerHTML = `<div class="col-span-full text-center text-red-500">Lỗi: ${err.message}</div>`;
+                }
+            });
+
+            // Handle Form Submit
+            document.getElementById('bookingForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if (!selectedStartTime) { alert('Vui lòng chọn 1 khung giờ!'); return; }
+
+                const date = document.getElementById('appointmentDate').value;
+                const reason = document.getElementById('reason').value;
+                const btnSubmit = document.getElementById('btnSubmit');
+
+                btnSubmit.disabled = true;
+                btnSubmit.textContent = 'Đang xử lý...';
+
+                try {
+                    const res = await fetchAPI('/appointments', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            doctorId: parseInt(doctorId),
+                            clinicId: parseInt(clinicId),
+                            appointmentDate: date,
+                            startTime: selectedStartTime,
+                            reason: reason
+                        })
+                    });
+
+                    alert('🎉 Đặt lịch thành công! Xin hãy kiểm tra email để xem thông tin.');
+                    window.location.href = '/patient.html'; // Chuyển về Dashboard Bệnh nhân
+                } catch (error) {
+                    // Xử lý báo trùng lịch
+                    if (error.statusCode === 409 && error.suggestedSlots) {
+                        showConflictModal(date, error.suggestedSlots);
+                    } else {
+                        alert('Lỗi đặt lịch: ' + error.message);
+                    }
+                } finally {
+                    btnSubmit.disabled = false;
+                    btnSubmit.textContent = 'Xác nhận Đặt Lịch';
+                }
+            });
+        });
+
+        function selectSlot(btn, start, end) {
+            // Remove selected class from all
+            document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+            // Add to current
+            btn.classList.add('selected');
+            selectedStartTime = start;
+            selectedEndTime = end;
+
+            // Show reason section
+            document.getElementById('reasonSection').classList.remove('hidden');
+        }
+
+        // --- Logic Xử lý Trùng lịch --- //
+        const modal = document.getElementById('conflictModal');
+
+        function showConflictModal(date, suggestedSlots) {
+            const container = document.getElementById('suggestedSlotsContainer');
+            
+            container.innerHTML = suggestedSlots.map(slot => {
+                return `
+                    <button onclick="applySuggestedSlot('${slot}')" class="w-full flex justify-between items-center bg-blue-50 hover:bg-blue-100 border border-blue-200 text-[#004ac6] p-3 rounded-lg font-semibold transition">
+                        <span>Cùng ngày, lúc ${slot}</span>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </button>
+                `;
+            }).join('');
+            
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            modal.classList.add('hidden');
+        }
+
+        function applySuggestedSlot(timeSlot) {
+            closeModal();
+            // Tự động tìm cái nút slot tương ứng trên giao diện và click nó
+            const buttons = document.querySelectorAll('.slot-btn');
+            for(let btn of buttons) {
+                if (btn.textContent.trim() === timeSlot) {
+                    btn.click();
+                    return;
+                }
+            }
+            alert('Slot này đã được chọn. Vui lòng bấm Xác nhận đặt lịch lại!');
+            selectedStartTime = timeSlot; // Fallback
+        }
+    </script>
+</body>
+</html>

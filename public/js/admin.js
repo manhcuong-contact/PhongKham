@@ -57,9 +57,25 @@ document.addEventListener('DOMContentLoaded', async () => {
                         break;
                 }
 
+                let actionButtons = '';
+                if (appt.status === 'pending') {
+                    actionButtons = `
+                        <div class="flex gap-2 mt-3 pt-3 border-t border-surface-container-highest">
+                            <button onclick="updateApptStatus(${appt.id}, 'confirmed')" class="flex-1 bg-primary text-white text-[11px] font-bold py-1.5 rounded hover:bg-primary/90 transition">Xác nhận</button>
+                            <button onclick="updateApptStatus(${appt.id}, 'cancelled')" class="flex-1 bg-error-container text-error text-[11px] font-bold py-1.5 rounded hover:bg-error-container/80 transition">Huỷ</button>
+                        </div>
+                    `;
+                } else if (appt.status === 'confirmed') {
+                    actionButtons = `
+                        <div class="flex gap-2 mt-3 pt-3 border-t border-surface-container-highest">
+                            <button onclick="updateApptStatus(${appt.id}, 'completed')" class="w-full bg-green-500 text-white text-[11px] font-bold py-1.5 rounded hover:bg-green-600 transition">Hoàn thành khám</button>
+                        </div>
+                    `;
+                }
+
                 // Render item
                 const html = `
-                <div class="p-4 hover:bg-surface-container-low rounded-lg transition-colors cursor-pointer border border-transparent hover:border-outline-variant mb-2 group">
+                <div class="p-4 hover:bg-surface-container-low rounded-lg transition-colors border border-transparent hover:border-outline-variant mb-2 group">
                     <div class="flex justify-between items-start mb-2">
                         <span class="px-2 py-1 ${statusClass} text-[11px] rounded font-bold uppercase tracking-tighter">${statusText}</span>
                         <span class="text-on-surface-variant text-[12px] font-medium">${appt.startTime}</span>
@@ -77,6 +93,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             </div>
                         </div>
                     </div>
+                    ${actionButtons}
                 </div>`;
                 listContainer.insertAdjacentHTML('beforeend', html);
             });
@@ -86,3 +103,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         alert('Lỗi tải dữ liệu. Vui lòng đăng nhập lại.');
     }
 });
+
+// Hàm Global để xử lý cập nhật trạng thái lịch hẹn
+window.updateApptStatus = async function(id, status) {
+    if (!confirm('Bạn có chắc chắn muốn thay đổi trạng thái lịch khám này?')) return;
+    try {
+        await fetchAPI(`/appointments/${id}/status`, {
+            method: 'PATCH',
+            body: JSON.stringify({ status })
+        });
+        // Reload lại trang để cập nhật Dashboard
+        window.location.reload();
+    } catch (error) {
+        alert('Lỗi khi cập nhật trạng thái: ' + error.message);
+    }
+};

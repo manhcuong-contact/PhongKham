@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chọn Bác sĩ - MediFlow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8f9ff; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- Navbar -->
+    <nav class="bg-white shadow-sm border-b border-[#e5eeff]">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center h-16">
+                <button onclick="window.history.back()" class="text-gray-500 hover:text-gray-900 mr-4 transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                </button>
+                <span class="text-xl font-bold text-[#004ac6]">Chọn Bác sĩ (Bước 2/3)</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-1 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        
+        <div class="bg-blue-50 border border-blue-100 rounded-xl p-6 mb-8 flex justify-between items-center">
+            <div>
+                <p class="text-sm text-blue-800 font-medium mb-1">Phòng khám đã chọn:</p>
+                <h2 id="clinicNameDisplay" class="text-2xl font-bold text-[#004ac6]">Đang tải...</h2>
+            </div>
+            <a href="/book-clinic.html" class="text-sm text-blue-600 hover:underline font-medium">Thay đổi</a>
+        </div>
+
+        <h3 class="text-xl font-bold text-gray-900 mb-6">Đội ngũ Bác sĩ</h3>
+        
+        <div id="doctorsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="col-span-full p-8 text-center bg-white rounded-xl border border-gray-200 text-gray-500">
+                Đang tải danh sách bác sĩ...
+            </div>
+        </div>
+    </main>
+
+    <script src="/js/api.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = getAccessToken();
+            if (!token) { window.location.href = '/login.html'; return; }
+
+            const clinicId = sessionStorage.getItem('booking_clinicId');
+            const clinicName = sessionStorage.getItem('booking_clinicName');
+
+            if (!clinicId) {
+                alert('Vui lòng chọn phòng khám trước!');
+                window.location.href = '/book-clinic.html';
+                return;
+            }
+
+            document.getElementById('clinicNameDisplay').textContent = clinicName || 'Phòng khám ' + clinicId;
+
+            await loadDoctors(clinicId);
+        });
+
+        async function loadDoctors(clinicId) {
+            const container = document.getElementById('doctorsContainer');
+            try {
+                const res = await fetchAPI(`/clinics/${clinicId}`);
+                const clinic = res.data;
+                const doctors = clinic.doctors;
+
+                if (!doctors || doctors.length === 0) {
+                    container.innerHTML = `<div class="col-span-full p-8 text-center bg-white rounded-xl border border-gray-200 text-gray-500">Hiện tại phòng khám này chưa có bác sĩ nào nhận lịch.</div>`;
+                    return;
+                }
+
+                container.innerHTML = doctors.map(doc => {
+                    const avatar = doc.avatarUrl || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(doc.fullName) + '&background=random';
+                    const spec = doc.specialty?.name || 'Đa khoa';
+                    
+                    return `
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-[#e5eeff] flex flex-col justify-between hover:shadow-md transition">
+                            <div class="flex items-start gap-4 mb-4">
+                                <img src="${avatar}" alt="Doctor" class="w-16 h-16 rounded-full object-cover border border-gray-200">
+                                <div>
+                                    <h4 class="font-bold text-lg text-gray-900">${doc.title || 'BS'} ${doc.fullName}</h4>
+                                    <p class="text-sm text-[#004ac6] font-medium mb-1">${spec}</p>
+                                    <p class="text-sm text-gray-500">Kinh nghiệm: ${doc.experience || 'N/A'} năm</p>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center mt-2 pt-4 border-t border-gray-100">
+                                <span class="font-bold text-gray-900">${(doc.consultationFee || 0).toLocaleString()} VNĐ</span>
+                                <button onclick="selectDoctor(${doc.id}, '${doc.fullName}')" class="bg-[#004ac6] text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-800 transition">
+                                    Tiếp tục
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (error) {
+                container.innerHTML = `<div class="col-span-full p-8 text-center text-red-500">Lỗi khi tải dữ liệu: ${error.message}</div>`;
+            }
+        }
+
+        function selectDoctor(doctorId, doctorName) {
+            sessionStorage.setItem('booking_doctorId', doctorId);
+            sessionStorage.setItem('booking_doctorName', doctorName);
+            window.location.href = '/book-time.html';
+        }
+    </script>
+</body>
+</html>

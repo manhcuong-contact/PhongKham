@@ -12,7 +12,7 @@
     <h1 class="text-5xl font-bold text-[#004ac6] mb-4">MediFlow</h1>
     <p class="text-xl text-gray-600 mb-8 max-w-lg">Hệ thống Đặt lịch khám sức khỏe Online. Tiện lợi, nhanh chóng, minh bạch.</p>
 
-    <div class="space-x-4">
+    <div id="auth-buttons" class="space-x-4">
         <a href="/login.html" class="bg-[#004ac6] text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-800 transition shadow-md">
             Đăng nhập
         </a>
@@ -21,5 +21,32 @@
         </a>
     </div>
 
+    <!-- Nhúng api.js để lấy token và user info -->
+    <script src="/js/api.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = getAccessToken();
+            const userStr = localStorage.getItem('user');
+            const authButtons = document.getElementById('auth-buttons');
+
+            if (token && userStr) {
+                const user = JSON.parse(userStr);
+                // Nếu đã đăng nhập, thay đổi giao diện 2 nút thành lời chào
+                authButtons.innerHTML = `
+                    <div class="flex flex-col items-center gap-4">
+                        <span class="text-lg font-semibold text-gray-800">Xin chào, ${user.email} 👋</span>
+                        <div class="space-x-4">
+                            ${(user.role === 'admin' || user.role === 'doctor') 
+                                ? `<a href="/admin.html" class="bg-[#004ac6] text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-800 transition shadow-md">Vào Trang Quản Trị</a>` 
+                                : `<button onclick="alert('Tính năng đặt lịch cho bệnh nhân đang được phát triển!')" class="bg-[#004ac6] text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-800 transition shadow-md">Đặt Lịch Khám</button>`}
+                            <button onclick="clearTokens(); window.location.reload();" class="bg-red-100 text-red-600 px-8 py-3 rounded-lg font-semibold hover:bg-red-200 transition shadow-sm">
+                                Đăng xuất
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+    </script>
 </body>
 </html>

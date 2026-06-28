@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tìm Phòng Khám - MediFlow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8f9ff; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- Navbar -->
+    <nav class="bg-white shadow-sm border-b border-[#e5eeff]">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center cursor-pointer" onclick="window.location.href='/patient.html'">
+                    <svg class="w-6 h-6 text-[#004ac6] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                    <span class="text-xl font-bold text-[#004ac6]">Tìm Phòng Khám (Bước 1/3)</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-1 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-[#e5eeff] mb-8">
+            <h2 class="text-lg font-bold text-gray-900 mb-4">📍 Bộ Lọc Vị Trí & Khoảng Cách</h2>
+            
+            <div class="flex flex-col md:flex-row items-end gap-6">
+                <!-- Nút lấy GPS -->
+                <div class="w-full md:w-auto">
+                    <button id="btnGetLocation" class="w-full md:w-auto bg-[#004ac6] text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-blue-800 transition shadow flex items-center justify-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        Lấy vị trí hiện tại của tôi
+                    </button>
+                    <p id="locationStatus" class="text-sm text-gray-500 mt-2 h-5">Chưa có vị trí. Hãy nhấn nút để lấy GPS.</p>
+                </div>
+
+                <!-- Slider Khoảng cách -->
+                <div class="flex-1 w-full">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Bán kính tìm kiếm: <span id="radiusValue" class="text-[#004ac6] font-bold">10 km</span></label>
+                    <input type="range" id="radiusSlider" min="1" max="100" value="10" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    <div class="flex justify-between text-xs text-gray-500 mt-1">
+                        <span>1 km</span>
+                        <span>100 km</span>
+                    </div>
+                </div>
+
+                <!-- Nút Search -->
+                <div class="w-full md:w-auto">
+                    <button id="btnSearch" disabled class="w-full md:w-auto bg-gray-300 text-gray-500 cursor-not-allowed px-8 py-2.5 rounded-lg font-semibold transition">
+                        Tìm Kiếm
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kết quả -->
+        <h2 class="text-xl font-bold text-gray-900 mb-4">🏢 Danh sách phòng khám gần bạn</h2>
+        <div id="clinicsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="col-span-full p-8 text-center bg-white rounded-xl border border-gray-200 text-gray-500">
+                Hãy lấy vị trí và nhấn tìm kiếm để xem phòng khám gần bạn.
+            </div>
+        </div>
+    </main>
+
+    <script src="/js/api.js"></script>
+    <script>
+        let currentLat = null;
+        let currentLng = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = getAccessToken();
+            if (!token) { window.location.href = '/login.html'; return; }
+
+            const slider = document.getElementById('radiusSlider');
+            const radiusValue = document.getElementById('radiusValue');
+            const btnGetLocation = document.getElementById('btnGetLocation');
+            const locationStatus = document.getElementById('locationStatus');
+            const btnSearch = document.getElementById('btnSearch');
+
+            slider.addEventListener('input', (e) => {
+                radiusValue.textContent = `${e.target.value} km`;
+            });
+
+            btnGetLocation.addEventListener('click', () => {
+                locationStatus.textContent = 'Đang lấy tọa độ GPS...';
+                if (!navigator.geolocation) {
+                    locationStatus.textContent = 'Trình duyệt của bạn không hỗ trợ Geolocation.';
+                    locationStatus.className = 'text-sm text-red-500 mt-2 h-5';
+                    return;
+                }
+
+                navigator.geolocation.getCurrentPosition((position) => {
+                    currentLat = position.coords.latitude;
+                    currentLng = position.coords.longitude;
+                    locationStatus.textContent = `Đã lấy vị trí: Vĩ độ ${currentLat.toFixed(4)}, Kinh độ ${currentLng.toFixed(4)}`;
+                    locationStatus.className = 'text-sm text-green-600 font-medium mt-2 h-5';
+                    
+                    // Kích hoạt nút tìm kiếm
+                    btnSearch.disabled = false;
+                    btnSearch.className = 'w-full md:w-auto bg-[#004ac6] text-white px-8 py-2.5 rounded-lg font-semibold hover:bg-blue-800 transition shadow';
+                }, (error) => {
+                    locationStatus.textContent = `Lỗi GPS: ${error.message}. (Bạn cần cấp quyền vị trí)`;
+                    locationStatus.className = 'text-sm text-red-500 mt-2 h-5';
+                });
+            });
+
+            btnSearch.addEventListener('click', async () => {
+                if (currentLat === null || currentLng === null) return;
+                const radius = slider.value;
+                const container = document.getElementById('clinicsContainer');
+                
+                container.innerHTML = '<div class="col-span-full p-8 text-center text-blue-600 font-medium">Đang tìm kiếm bằng thuật toán Haversine...</div>';
+
+                try {
+                    const res = await fetchAPI(`/clinics/nearby?lat=${currentLat}&lng=${currentLng}&radius=${radius}`);
+                    const clinics = res.data;
+
+                    if (!clinics || clinics.length === 0) {
+                        container.innerHTML = `<div class="col-span-full p-8 text-center bg-white rounded-xl border border-gray-200 text-gray-500">Không tìm thấy phòng khám nào trong bán kính ${radius}km. Hãy tăng bán kính lên.</div>`;
+                        return;
+                    }
+
+                    container.innerHTML = clinics.map(clinic => {
+                        const distanceStr = clinic.distance ? `${clinic.distance.toFixed(1)} km` : 'N/A';
+                        const mapLink = `https://www.google.com/maps/dir/?api=1&destination=${clinic.latitude},${clinic.longitude}`;
+                        
+                        return `
+                            <div class="bg-white p-6 rounded-xl shadow-sm border border-[#e5eeff] hover:shadow-md transition flex flex-col justify-between">
+                                <div>
+                                    <div class="flex justify-between items-start mb-2">
+                                        <h3 class="text-lg font-bold text-gray-900">${clinic.name}</h3>
+                                        <span class="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-1 rounded">Cách ${distanceStr}</span>
+                                    </div>
+                                    <p class="text-sm text-gray-600 mb-3 flex items-start">
+                                        <svg class="w-4 h-4 mr-1 mt-0.5 flex-shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
+                                        ${clinic.address}
+                                    </p>
+                                    <a href="${mapLink}" target="_blank" class="inline-flex items-center text-sm text-[#004ac6] hover:underline mb-4 font-medium">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
+                                        Xem trên Google Maps
+                                    </a>
+                                </div>
+                                <button onclick="selectClinic(${clinic.id}, '${clinic.name}')" class="w-full bg-blue-50 text-[#004ac6] border border-blue-100 py-2 rounded-lg font-semibold hover:bg-[#004ac6] hover:text-white transition">
+                                    Chọn phòng khám này
+                                </button>
+                            </div>
+                        `;
+                    }).join('');
+                } catch (error) {
+                    container.innerHTML = `<div class="col-span-full p-8 text-center text-red-500">Lỗi khi tải dữ liệu: ${error.message}</div>`;
+                }
+            });
+        });
+
+        function selectClinic(clinicId, clinicName) {
+            // Lưu tạm vào sessionStorage để truyền qua trang sau
+            sessionStorage.setItem('booking_clinicId', clinicId);
+            sessionStorage.setItem('booking_clinicName', clinicName);
+            window.location.href = '/book-doctor.html';
+        }
+    </script>
+</body>
+</html>
