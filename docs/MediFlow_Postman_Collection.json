@@ -1,0 +1,118 @@
+{
+  "info": {
+    "name": "MediFlow API - Đặt Lịch Khám Online",
+    "description": "Bộ API cho hệ thống đặt lịch khám sức khỏe online với Node.js, Express và SQL Server.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "Đăng ký (Patient)",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/auth/register", "host": [ "{{baseUrl}}" ], "path": [ "auth", "register" ] },
+            "body": { "mode": "raw", "raw": "{\n    \"email\": \"patient1@gmail.com\",\n    \"password\": \"123456\",\n    \"fullName\": \"Nguyen Van A\",\n    \"phone\": \"0901234567\"\n}" }
+          }
+        },
+        {
+          "name": "Đăng nhập",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if(jsonData.data && jsonData.data.accessToken) {",
+                  "    pm.environment.set(\"token\", jsonData.data.accessToken);",
+                  "    pm.environment.set(\"refreshToken\", jsonData.data.refreshToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": [ "{{baseUrl}}" ], "path": [ "auth", "login" ] },
+            "body": { "mode": "raw", "raw": "{\n    \"email\": \"admin@mediflow.vn\",\n    \"password\": \"Admin@123\"\n}" }
+          }
+        },
+        {
+          "name": "Lấy thông tin cá nhân (Me)",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+            "url": { "raw": "{{baseUrl}}/auth/me", "host": [ "{{baseUrl}}" ], "path": [ "auth", "me" ] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Admin Dashboard",
+      "item": [
+        {
+          "name": "Tổng quan thống kê",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+            "url": { "raw": "{{baseUrl}}/admin/dashboard", "host": [ "{{baseUrl}}" ], "path": [ "admin", "dashboard" ] }
+          }
+        },
+        {
+          "name": "Lịch hẹn gần đây",
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+            "url": { "raw": "{{baseUrl}}/admin/appointments/recent", "host": [ "{{baseUrl}}" ], "path": [ "admin", "appointments", "recent" ] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Booking & Appointments",
+      "item": [
+        {
+          "name": "Lấy khung giờ trống của Bác sĩ",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/doctors/1/slots?date=2026-10-15", "host": [ "{{baseUrl}}" ], "path": [ "doctors", "1", "slots" ], "query": [ { "key": "date", "value": "2026-10-15" } ] }
+          }
+        },
+        {
+          "name": "Đặt lịch khám mới",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/appointments", "host": [ "{{baseUrl}}" ], "path": [ "appointments" ] },
+            "body": { "mode": "raw", "raw": "{\n    \"doctorId\": 1,\n    \"clinicId\": 1,\n    \"appointmentDate\": \"2026-10-15\",\n    \"startTime\": \"09:00\",\n    \"reason\": \"Đau bụng, buồn nôn\"\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Clinics (Haversine)",
+      "item": [
+        {
+          "name": "Tìm phòng khám gần nhất",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/clinics/nearby?lat=21.0285&lng=105.8542&radius=10", "host": [ "{{baseUrl}}" ], "path": [ "clinics", "nearby" ], "query": [ { "key": "lat", "value": "21.0285" }, { "key": "lng", "value": "105.8542" }, { "key": "radius", "value": "10" } ] }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000/api/v1" },
+    { "key": "token", "value": "" }
+  ]
+}
