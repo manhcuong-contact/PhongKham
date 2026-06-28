@@ -80,8 +80,9 @@ const startServer = async () => {
     // Test DB connection
     await testConnection();
 
-    // Sync models (alter: true để cập nhật schema mà không xóa dữ liệu)
-    await sequelize.sync({ alter: true });
+    // Sync models - dùng alter:false vì schema đã ổn định
+    // Chỉ tạo bảng mới nếu chưa tồn tại
+    await sequelize.sync({ alter: false });
     logger.info('✅ Database synchronized thành công');
 
     // Start cron jobs

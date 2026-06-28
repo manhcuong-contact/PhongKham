@@ -215,7 +215,7 @@ const seedAdmin = async () => {
 const runSeed = async () => {
   try {
     await testConnection();
-    await sequelize.sync({ alter: true });
+    await sequelize.sync({ alter: false }); // Không alter lại, bảng đã có sẵn
     logger.info('🌱 Bắt đầu import dữ liệu từ CSV...');
 
     await seedSpecialties();
