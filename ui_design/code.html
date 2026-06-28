@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+
+<html class="light" lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MediFlow Admin - Quản lý lịch hẹn</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-lowest": "#ffffff",
+                    "on-surface-variant": "#434655",
+                    "on-primary-container": "#eeefff",
+                    "surface-variant": "#d3e4fe",
+                    "outline": "#737686",
+                    "inverse-primary": "#b4c5ff",
+                    "surface": "#f8f9ff",
+                    "outline-variant": "#c3c6d7",
+                    "error": "#ba1a1a",
+                    "surface-container-high": "#dce9ff",
+                    "inverse-surface": "#213145",
+                    "tertiary": "#784b00",
+                    "on-secondary": "#ffffff",
+                    "on-secondary-container": "#00714d",
+                    "tertiary-fixed-dim": "#ffb95f",
+                    "error-container": "#ffdad6",
+                    "tertiary-container": "#996100",
+                    "surface-bright": "#f8f9ff",
+                    "surface-tint": "#0053db",
+                    "on-surface": "#0b1c30",
+                    "on-tertiary-container": "#ffeedd",
+                    "secondary-fixed": "#6ffbbe",
+                    "on-error": "#ffffff",
+                    "secondary-container": "#6cf8bb",
+                    "primary-fixed-dim": "#b4c5ff",
+                    "on-tertiary": "#ffffff",
+                    "surface-container": "#e5eeff",
+                    "on-error-container": "#93000a",
+                    "surface-container-highest": "#d3e4fe",
+                    "on-primary-fixed-variant": "#003ea8",
+                    "secondary-fixed-dim": "#4edea3",
+                    "surface-dim": "#cbdbf5",
+                    "surface-container-low": "#eff4ff",
+                    "on-background": "#0b1c30",
+                    "inverse-on-surface": "#eaf1ff",
+                    "primary-fixed": "#dbe1ff",
+                    "primary-container": "#2563eb",
+                    "on-secondary-fixed": "#002113",
+                    "on-secondary-fixed-variant": "#005236",
+                    "primary": "#004ac6",
+                    "on-primary-fixed": "#00174b",
+                    "secondary": "#006c49",
+                    "on-tertiary-fixed": "#2a1700",
+                    "tertiary-fixed": "#ffddb8",
+                    "background": "#f8f9ff",
+                    "on-tertiary-fixed-variant": "#653e00",
+                    "on-primary": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "stack-md": "16px",
+                    "stack-lg": "32px",
+                    "stack-sm": "8px",
+                    "unit": "4px",
+                    "gutter": "16px",
+                    "container-margin": "24px"
+            },
+            "fontFamily": {
+                    "body-lg": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "title-lg": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "display-lg": ["Inter"],
+                    "body-md": ["Inter"],
+                    "label-md": ["Inter"],
+                    "headline-lg-mobile": ["Inter"]
+            },
+            "fontSize": {
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "title-lg": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "display-lg": ["48px", {"lineHeight": "60px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      body {
+        font-family: 'Inter', sans-serif;
+        background-color: #f8f9ff;
+      }
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #c3c6d7;
+        border-radius: 10px;
+      }
+      .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+      }
+      .status-dot-completed { background-color: #006c49; }
+      .status-dot-pending { background-color: #784b00; }
+      .status-dot-cancelled { background-color: #ba1a1a; }
+    </style>
+</head>
+<body class="text-on-surface">
+<!-- SideNavBar -->
+<aside class="w-[280px] h-screen fixed left-0 top-0 bg-surface dark:bg-inverse-surface flex flex-col h-full p-stack-md z-50">
+<div class="mb-10 px-2">
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-inverse-primary">MediFlow Admin</h1>
+<p class="text-on-surface-variant font-body-md text-body-md">Central Management</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-colors duration-200 active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body-md text-body-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 bg-primary-container text-on-primary-container font-semibold rounded-lg active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined">calendar_month</span>
+<span class="font-body-md text-body-md">Appointments</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-colors duration-200 active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-body-md text-body-md">Patients</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-colors duration-200 active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined">clinical_notes</span>
+<span class="font-body-md text-body-md">Medical Records</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-colors duration-200 active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined">medical_services</span>
+<span class="font-body-md text-body-md">Clinics</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-colors duration-200 active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined">monitoring</span>
+<span class="font-body-md text-body-md">Analytics</span>
+</a>
+</nav>
+<div class="mt-auto space-y-1 border-t border-outline-variant pt-4">
+<button class="w-full bg-primary text-on-primary font-body-md text-body-md py-3 rounded-lg font-semibold mb-4 hover:opacity-90 transition-opacity">
+                New Appointment
+            </button>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-colors duration-200 active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-md text-body-md">Settings</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-colors duration-200 active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="font-body-md text-body-md">Support</span>
+</a>
+</div>
+</aside>
+<!-- TopNavBar -->
+<header class="flex justify-between items-center w-full px-container-margin h-16 ml-[280px] w-[calc(100%-280px)] bg-surface-container-lowest dark:bg-surface-container-high border-b border-outline-variant shadow-sm sticky top-0 z-40">
+<div class="flex items-center gap-6">
+<div class="relative focus-within:ring-2 focus-within:ring-primary rounded-lg transition-all">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-lg font-body-md text-body-md w-80 focus:ring-0" placeholder="Tìm kiếm bệnh nhân, bác sĩ..." type="text"/>
+</div>
+<nav class="hidden md:flex gap-6">
+<a class="text-on-surface-variant hover:text-primary font-body-lg text-body-lg transition-all" href="#">Overview</a>
+<a class="text-primary border-b-2 border-primary pb-1 font-body-lg text-body-lg" href="#">Schedule</a>
+<a class="text-on-surface-variant hover:text-primary font-body-lg text-body-lg transition-all" href="#">Patients</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-high rounded-full transition-all">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-high rounded-full transition-all">
+<span class="material-symbols-outlined">chat_bubble</span>
+</button>
+<div class="flex items-center gap-3 ml-2 cursor-pointer hover:bg-surface-container-high p-1 rounded-lg transition-all">
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A professional medical administrative officer with a clean, friendly look, set in a brightly lit, high-end modern healthcare facility office with minimalist blue and white decor. The lighting is soft and corporate, conveying trust and efficiency in a high-tech medical environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA-zsZTbGgetDV7WAg0bk0nBbWdDIhNrqE9TeUukqeA_wyEAuuh6ip6XxpxW4wCmyVy7sIZ28CXybPjQgDb9eRvini0TSXcHYRZYdD9dCCasDC8Z1pvDst9D3Nu7S0TkhxpnOXAdK8VWbxiNER95ROpsaHLpS0p_ANy8G2PbFr-SjDXhXWGjthoY0ApEo3erUNx_7NcaL0XQZv57yJ7Ski_LwOaJEX9S4CKCS7MGEJ266z3X46UyyUgi4Ge85aTJW2JY6Nwbom0guvK"/>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant">account_circle</span>
+</div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="ml-[280px] p-container-margin">
+<div class="max-w-[1400px] mx-auto">
+<!-- Header Section -->
+<div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Lịch hẹn khám bệnh</h2>
+<p class="text-on-surface-variant font-body-md text-body-md">Quản lý và điều phối lịch trình khám chữa bệnh tại các cơ sở.</p>
+</div>
+<div class="flex gap-3">
+<div class="flex bg-surface-container-high p-1 rounded-lg">
+<button class="px-4 py-2 bg-surface-container-lowest shadow-sm rounded-md font-label-md text-label-md text-primary">Tháng</button>
+<button class="px-4 py-2 text-on-surface-variant font-label-md text-label-md hover:text-primary">Tuần</button>
+<button class="px-4 py-2 text-on-surface-variant font-label-md text-label-md hover:text-primary">Ngày</button>
+</div>
+</div>
+</div>
+<!-- Filter Bar -->
+<div class="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant mb-6 shadow-sm flex flex-wrap gap-4 items-center">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-outline">filter_list</span>
+<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Bộ lọc:</span>
+</div>
+<div class="flex flex-wrap gap-3">
+<select class="bg-surface-container-low border-outline-variant rounded-lg font-body-md text-body-md py-2 px-4 focus:ring-primary">
+<option>Tất cả Bác sĩ</option>
+<option>BS. Nguyễn Văn A</option>
+<option>BS. Trần Thị B</option>
+</select>
+<select class="bg-surface-container-low border-outline-variant rounded-lg font-body-md text-body-md py-2 px-4 focus:ring-primary">
+<option>Chuyên khoa</option>
+<option>Nội tổng quát</option>
+<option>Tim mạch</option>
+<option>Nhi khoa</option>
+</select>
+<select class="bg-surface-container-low border-outline-variant rounded-lg font-body-md text-body-md py-2 px-4 focus:ring-primary">
+<option>Phòng khám</option>
+<option>Phòng 101 - Khu A</option>
+<option>Phòng 205 - Khu B</option>
+</select>
+<input class="bg-surface-container-low border-outline-variant rounded-lg font-body-md text-body-md py-2 px-4 focus:ring-primary" type="date"/>
+</div>
+<button class="ml-auto flex items-center gap-2 text-primary font-label-md text-label-md hover:bg-surface-container-high px-4 py-2 rounded-lg transition-all">
+<span class="material-symbols-outlined text-[20px]">refresh</span>
+                    Làm mới
+                </button>
+</div>
+<!-- Bento Layout Content -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Main Calendar View (Col 1-8) -->
+<div class="col-span-12 lg:col-span-8 bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden flex flex-col">
+<div class="p-6 border-b border-outline-variant flex justify-between items-center bg-surface-container-lowest">
+<div class="flex items-center gap-4">
+<h3 class="font-title-lg text-title-lg text-on-surface">Tháng 10, 2023</h3>
+<div class="flex gap-1">
+<button class="p-1.5 hover:bg-surface-container-high rounded transition-all">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<button class="p-1.5 hover:bg-surface-container-high rounded transition-all">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-full status-dot-completed"></span>
+<span class="text-[12px] text-on-surface-variant font-medium">Đã khám</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-full status-dot-pending"></span>
+<span class="text-[12px] text-on-surface-variant font-medium">Đang chờ</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-full status-dot-cancelled"></span>
+<span class="text-[12px] text-on-surface-variant font-medium">Đã hủy</span>
+</div>
+</div>
+</div>
+<div class="calendar-grid bg-outline-variant/20 gap-[1px]">
+<!-- Days of week -->
+<div class="bg-surface-container-low p-3 text-center font-label-md text-label-md text-on-surface-variant">T2</div>
+<div class="bg-surface-container-low p-3 text-center font-label-md text-label-md text-on-surface-variant">T3</div>
+<div class="bg-surface-container-low p-3 text-center font-label-md text-label-md text-on-surface-variant">T4</div>
+<div class="bg-surface-container-low p-3 text-center font-label-md text-label-md text-on-surface-variant">T5</div>
+<div class="bg-surface-container-low p-3 text-center font-label-md text-label-md text-on-surface-variant">T6</div>
+<div class="bg-surface-container-low p-3 text-center font-label-md text-label-md text-on-surface-variant">T7</div>
+<div class="bg-surface-container-low p-3 text-center font-label-md text-label-md text-on-surface-variant">CN</div>
+<!-- Calendar Cells (Simplified) -->
+<div class="bg-surface-container-lowest min-h-[120px] p-2 opacity-40">25</div>
+<div class="bg-surface-container-lowest min-h-[120px] p-2 opacity-40">26</div>
+<div class="bg-surface-container-lowest min-h-[120px] p-2 opacity-40">27</div>
+<div class="bg-surface-container-lowest min-h-[120px] p-2 opacity-40">28</div>
+<div class="bg-surface-container-lowest min-h-[120px] p-2 opacity-40">29</div>
+<div class="bg-surface-container-lowest min-h-[120px] p-2 opacity-40">30</div>
+<div class="bg-surface-container-lowest min-h-[120px] p-2">1</div>
+<div class="bg-surface-container-lowest min-h-[120px] p-2">2</div>
+<div class="bg-surface-container-lowest min-h-[120px] p-2">
+<span>3</span>
+<div class="mt-2 space-y-1">
+<div class="bg-secondary-container/20 text-on-secondary-container text-[11px] p-1 rounded border-l-2 border-secondary font-medium">08:00 - BS. Hùng</div>
+<div class="bg-tertiary-container/20 text-tertiary text-[11px] p-1 rounded border-l-2 border-tertiary font-medium">10:30 - BS. Linh</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest min-h-[120px] p-2">4</div>
+<div class="bg-surface-container-lowest min-h-[120px] p-2">5</div>
+<div class="bg-surface-container-lowest min-h-[120px] p-2 bg-primary-container/10">
+<span class="font-bold text-primary">6</span>
+<div class="mt-2 space-y-1">
+<div class="bg-secondary-container/20 text-on-secondary-container text-[11px] p-1 rounded border-l-2 border-secondary font-medium">09:00 - BS. An</div>
+<div class="bg-error-container/20 text-error text-[11px] p-1 rounded border-l-2 border-error font-medium">14:00 - BS. Nam</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest min-h-[120px] p-2">7</div>
+<div class="bg-surface-container-lowest min-h-[120px] p-2">8</div>
+<!-- Add more cells as needed for mock-up -->
+<div class="bg-surface-container-lowest min-h-[120px] p-2">9</div>
+<div class="bg-surface-container-lowest min-h-[120px] p-2">10</div>
+<div class="bg-surface-container-lowest min-h-[120px] p-2">11</div>
+<div class="bg-surface-container-lowest min-h-[120px] p-2">12</div>
+<div class="bg-surface-container-lowest min-h-[120px] p-2">13</div>
+<div class="bg-surface-container-lowest min-h-[120px] p-2">14</div>
+<div class="bg-surface-container-lowest min-h-[120px] p-2">15</div>
+</div>
+</div>
+<!-- Appointment Sidebar List (Col 9-12) -->
+<div class="col-span-12 lg:col-span-4 flex flex-col gap-6">
+<!-- Statistics Card -->
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm">
+<h4 class="font-title-lg text-title-lg text-on-surface mb-4">Tổng quan hôm nay</h4>
+<div class="grid grid-cols-3 gap-3">
+<div class="text-center p-3 bg-surface-container-low rounded-lg">
+<p class="text-primary font-headline-md text-headline-md">24</p>
+<p class="text-[11px] uppercase tracking-wider text-on-surface-variant font-bold">Lịch hẹn</p>
+</div>
+<div class="text-center p-3 bg-surface-container-low rounded-lg">
+<p class="text-secondary font-headline-md text-headline-md">18</p>
+<p class="text-[11px] uppercase tracking-wider text-on-surface-variant font-bold">Đã xong</p>
+</div>
+<div class="text-center p-3 bg-surface-container-low rounded-lg">
+<p class="text-error font-headline-md text-headline-md">2</p>
+<p class="text-[11px] uppercase tracking-wider text-on-surface-variant font-bold">Bị hủy</p>
+</div>
+</div>
+</div>
+<!-- Upcoming List -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm flex flex-col flex-1 max-h-[600px]">
+<div class="p-6 border-b border-outline-variant flex justify-between items-center">
+<h4 class="font-title-lg text-title-lg text-on-surface">Lịch sắp tới</h4>
+<button class="text-primary font-label-md text-label-md hover:underline">Xem tất cả</button>
+</div>
+<div class="flex-1 overflow-y-auto custom-scrollbar p-2">
+<!-- Appointment Item 1 -->
+<div class="p-4 hover:bg-surface-container-low rounded-lg transition-colors cursor-pointer border border-transparent hover:border-outline-variant mb-2 group">
+<div class="flex justify-between items-start mb-2">
+<span class="px-2 py-1 bg-secondary-container/20 text-on-secondary-container text-[11px] rounded font-bold uppercase tracking-tighter">Đã khám</span>
+<span class="text-on-surface-variant text-[12px] font-medium">08:30 AM</span>
+</div>
+<h5 class="font-body-lg text-body-lg text-on-surface mb-1 group-hover:text-primary transition-colors">Lê Minh Hoàn</h5>
+<div class="flex items-center gap-2 text-on-surface-variant text-[13px] mb-3">
+<span class="material-symbols-outlined text-[16px]">person</span>
+                                    BS. Nguyễn Văn An
+                                </div>
+<div class="flex items-center gap-4 text-[12px]">
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px]">medical_information</span>
+                                        Nội soi tiêu hóa
+                                    </div>
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px]">location_on</span>
+                                        P. 104
+                                    </div>
+</div>
+</div>
+<!-- Appointment Item 2 -->
+<div class="p-4 hover:bg-surface-container-low rounded-lg transition-colors cursor-pointer border border-transparent hover:border-outline-variant mb-2 group">
+<div class="flex justify-between items-start mb-2">
+<span class="px-2 py-1 bg-tertiary-container/20 text-tertiary text-[11px] rounded font-bold uppercase tracking-tighter">Đang chờ</span>
+<span class="text-on-surface-variant text-[12px] font-medium">10:15 AM</span>
+</div>
+<h5 class="font-body-lg text-body-lg text-on-surface mb-1 group-hover:text-primary transition-colors">Trần Thùy Chi</h5>
+<div class="flex items-center gap-2 text-on-surface-variant text-[13px] mb-3">
+<span class="material-symbols-outlined text-[16px]">person</span>
+                                    BS. Phạm Thu Thủy
+                                </div>
+<div class="flex items-center gap-4 text-[12px]">
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px]">medical_information</span>
+                                        Khám định kỳ
+                                    </div>
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px]">location_on</span>
+                                        P. 201
+                                    </div>
+</div>
+</div>
+<!-- Appointment Item 3 -->
+<div class="p-4 hover:bg-surface-container-low rounded-lg transition-colors cursor-pointer border border-transparent hover:border-outline-variant mb-2 group">
+<div class="flex justify-between items-start mb-2">
+<span class="px-2 py-1 bg-error-container/20 text-error text-[11px] rounded font-bold uppercase tracking-tighter">Đã hủy</span>
+<span class="text-on-surface-variant text-[12px] font-medium">11:00 AM</span>
+</div>
+<h5 class="font-body-lg text-body-lg text-on-surface mb-1 group-hover:text-primary transition-colors">Nguyễn Mạnh Tùng</h5>
+<div class="flex items-center gap-2 text-on-surface-variant text-[13px] mb-3">
+<span class="material-symbols-outlined text-[16px]">person</span>
+                                    BS. Nguyễn Văn An
+                                </div>
+<div class="flex items-center gap-4 text-[12px]">
+<div class="flex items-center gap-1 text-on-surface-variant text-error line-through">
+<span class="material-symbols-outlined text-[14px]">medical_information</span>
+                                        Xét nghiệm máu
+                                    </div>
+</div>
+</div>
+<!-- Appointment Item 4 -->
+<div class="p-4 hover:bg-surface-container-low rounded-lg transition-colors cursor-pointer border border-transparent hover:border-outline-variant mb-2 group">
+<div class="flex justify-between items-start mb-2">
+<span class="px-2 py-1 bg-tertiary-container/20 text-tertiary text-[11px] rounded font-bold uppercase tracking-tighter">Đang chờ</span>
+<span class="text-on-surface-variant text-[12px] font-medium">01:45 PM</span>
+</div>
+<h5 class="font-body-lg text-body-lg text-on-surface mb-1 group-hover:text-primary transition-colors">Vũ Anh Thư</h5>
+<div class="flex items-center gap-2 text-on-surface-variant text-[13px] mb-3">
+<span class="material-symbols-outlined text-[16px]">person</span>
+                                    BS. Lê Đại Nghĩa
+                                </div>
+<div class="flex items-center gap-4 text-[12px]">
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px]">medical_information</span>
+                                        Tai Mũi Họng
+                                    </div>
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px]">location_on</span>
+                                        P. 302
+                                    </div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<script>
+      // Simple interaction for selecting menu items
+      const navLinks = document.querySelectorAll('aside nav a');
+      navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+          navLinks.forEach(l => {
+            l.classList.remove('bg-primary-container', 'text-on-primary-container', 'font-semibold', 'rounded-lg');
+            l.classList.add('text-on-surface-variant', 'hover:bg-surface-variant', 'hover:text-on-surface');
+          });
+          link.classList.add('bg-primary-container', 'text-on-primary-container', 'font-semibold', 'rounded-lg');
+          link.classList.remove('text-on-surface-variant', 'hover:bg-surface-variant', 'hover:text-on-surface');
+        });
+      });
+
+      // Quick tab switcher for TopNavBar
+      const topLinks = document.querySelectorAll('header nav a');
+      topLinks.forEach(link => {
+        link.addEventListener('click', () => {
+          topLinks.forEach(l => {
+            l.classList.remove('text-primary', 'border-b-2', 'border-primary', 'pb-1');
+            l.classList.add('text-on-surface-variant', 'hover:text-primary');
+          });
+          link.classList.add('text-primary', 'border-b-2', 'border-primary', 'pb-1');
+          link.classList.remove('text-on-surface-variant', 'hover:text-primary');
+        });
+      });
+    </script>
+</body></html>

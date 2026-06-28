@@ -1,0 +1,35 @@
+{
+  "name": "dat-lich-kham-online",
+  "version": "1.0.0",
+  "description": "Hệ thống Đặt lịch khám sức khỏe Online - Backend API",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js",
+    "seed": "node src/utils/seedData.js"
+  },
+  "keywords": ["healthcare", "appointment", "booking", "nodejs"],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "csv-parser": "^3.2.1",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-validator": "^7.3.2",
+    "helmet": "^8.2.0",
+    "jsonwebtoken": "^9.0.3",
+    "morgan": "^1.11.0",
+    "multer": "^2.2.0",
+    "node-cron": "^4.5.0",
+    "nodemailer": "^9.0.1",
+    "sequelize": "^6.37.8",
+    "tedious": "^19.2.1",
+    "uuid": "^14.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
